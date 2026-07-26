@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparador de Convenios de Compra-Venta</title>
+<style>
+  :root{
+    --azul:#1d4ed8; --azul-suave:#eef2ff; --verde:#15803d; --verde-suave:#dcfce7;
+    --ambar:#b45309; --ambar-suave:#fef3c7; --rojo:#b91c1c; --rojo-suave:#fee2e2;
+    --gris-100:#f8fafc; --gris-200:#eef1f5; --gris-300:#dde3ea; --gris-500:#64748b; --gris-700:#334155; --gris-900:#0f172a;
+    --card-shadow:0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--gris-100);color:var(--gris-900);}
+  header{background:linear-gradient(135deg,#1d4ed8,#1e3a8a);color:#fff;padding:22px 28px;}
+  header h1{margin:0 0 4px;font-size:22px;}
+  header p{margin:0;opacity:.9;font-size:13.5px;max-width:900px;}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px 24px 60px;}
+  .steps{display:flex;gap:10px;margin:20px 0 24px;flex-wrap:wrap;}
+  .step-btn{flex:1;min-width:220px;background:#fff;border:2px solid var(--gris-300);border-radius:10px;padding:14px 16px;cursor:pointer;text-align:left;transition:.15s;}
+  .step-btn.active{border-color:var(--azul);background:var(--azul-suave);}
+  .step-btn .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--gris-300);color:#fff;font-size:12px;font-weight:700;margin-right:8px;}
+  .step-btn.active .num{background:var(--azul);}
+  .step-btn.done .num{background:var(--verde);}
+  .step-btn strong{font-size:14px;}
+  .step-btn div.sub{font-size:12px;color:var(--gris-500);margin-top:2px;}
+  .panel{display:none;background:#fff;border-radius:12px;box-shadow:var(--card-shadow);padding:22px 24px;margin-bottom:20px;}
+  .panel.active{display:block;}
+  .card{border:1px solid var(--gris-300);border-radius:10px;padding:16px 18px;margin-bottom:16px;background:var(--gris-100);}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .btn{background:var(--azul);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13.5px;font-weight:600;cursor:pointer;}
+  .btn:hover{background:#1e40af;}
+  .btn.secondary{background:#fff;color:var(--azul);border:1.5px solid var(--azul);}
+  .btn.secondary:hover{background:var(--azul-suave);}
+  .btn.ghost{background:transparent;color:var(--gris-500);border:1px solid var(--gris-300);}
+  .btn.danger{background:#fff;color:var(--rojo);border:1.5px solid var(--rojo);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn.small{padding:5px 10px;font-size:12px;}
+  input[type=text], input[type=number]{border:1px solid var(--gris-300);border-radius:6px;padding:7px 9px;font-size:13px;width:100%;}
+  label{font-size:12.5px;color:var(--gris-700);font-weight:600;display:block;margin-bottom:4px;}
+  .field{min-width:170px;}
+  .hint{font-size:12.5px;color:var(--gris-500);margin-top:6px;}
+  table{border-collapse:collapse;width:100%;font-size:13px;}
+  th,td{border:1px solid var(--gris-300);padding:7px 8px;text-align:left;vertical-align:top;}
+  th{background:var(--gris-200);font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:var(--gris-700);}
+  .mini-table input{padding:4px 6px;font-size:12.5px;}
+  .mini-table td{padding:3px 4px;}
+  .list-item{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--gris-300);border-radius:8px;padding:10px 14px;margin-bottom:8px;}
+  .list-item .meta{font-size:12.5px;color:var(--gris-500);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;}
+  .badge.ok{background:var(--verde-suave);color:var(--verde);}
+  .badge.warn{background:var(--ambar-suave);color:var(--ambar);}
+  .badge.off{background:var(--rojo-suave);color:var(--rojo);}
+  .badge.info{background:var(--azul-suave);color:var(--azul);}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:#fff;border-radius:12px;max-width:920px;width:100%;padding:22px 24px;}
+  .modal h3{margin-top:0;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;}
+  .close-x{float:right;cursor:pointer;font-size:20px;color:var(--gris-500);background:none;border:none;}
+  .cmp-scroll{overflow-x:auto;border:1px solid var(--gris-300);border-radius:8px;}
+  .cmp-table{min-width:1000px;}
+  .cmp-table th{white-space:nowrap;}
+  .opt-cell{min-width:190px;}
+  .opt-box{border-radius:8px;padding:8px 10px;font-size:12.5px;}
+  .opt-box .empresa{font-weight:700;margin-bottom:4px;color:var(--gris-900);}
+  .opt-box .linea{display:flex;justify-content:space-between;}
+  .opt-box.best{background:var(--verde-suave);border:1.5px solid var(--verde);}
+  .opt-box.blocked{background:var(--rojo-suave);opacity:.75;}
+  .opt-box.normal{background:#fff;border:1px solid var(--gris-300);}
+  .rec-cell{min-width:200px;}
+  .empty-cell{color:var(--gris-500);font-size:12px;text-align:center;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+  .kpis{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .kpi{background:var(--gris-100);border:1px solid var(--gris-300);border-radius:10px;padding:12px 16px;min-width:160px;}
+  .kpi .val{font-size:20px;font-weight:700;}
+  .kpi .lbl{font-size:12px;color:var(--gris-500);}
+  details.help{background:var(--azul-suave);border-radius:10px;padding:12px 16px;margin-bottom:18px;}
+  details.help summary{cursor:pointer;font-weight:700;color:var(--azul);}
+  details.help ul{margin:10px 0 0;padding-left:20px;font-size:13px;line-height:1.6;}
+  .dropzone{border:2px dashed var(--gris-300);border-radius:10px;padding:26px;text-align:center;cursor:pointer;background:#fff;}
+  .dropzone:hover{border-color:var(--azul);background:var(--azul-suave);}
+  .dropzone.drag{border-color:var(--azul);background:var(--azul-suave);}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--gris-900);color:#fff;padding:12px 18px;border-radius:8px;font-size:13.5px;z-index:100;box-shadow:var(--card-shadow);max-width:360px;}
+  .toast.err{background:var(--rojo);}
+  .toast.ok{background:var(--verde);}
+  .sensitivity{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--gris-700);}
+  input[type=range]{width:140px;}
+  footer{text-align:center;color:var(--gris-500);font-size:12px;padding:20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Comparador de Convenios de Compra-Venta</h1>
+  <p>Carga los convenios vigentes con distintas marcas/distribuidoras y una cotización o solicitud de precios de un cliente. La herramienta compara automáticamente costo, precio y margen de cada producto entre convenios y sugiere la opción más rentable para generar la compra.</p>
+</header>
+
+<div class="wrap">
+
+  <details class="help">
+    <summary>¿Cómo funciona esta herramienta? (leer antes de usar)</summary>
+    <ul>
+      <li><b>Todo corre en tu navegador.</b> No se envía ningún archivo a un servidor externo. Los convenios que cargues se guardan en el almacenamiento local de este navegador (IndexedDB), en esta computadora, para que sigan disponibles la próxima vez que abras este mismo archivo HTML en el mismo navegador.</li>
+      <li><b>Formatos aceptados:</b> PDF, Word (.docx), Excel (.xlsx/.xls), CSV y texto plano (.txt).</li>
+      <li><b>La lectura automática de PDF/Word es aproximada.</b> Siempre revisa y corrige la tabla antes de guardar — por eso cada carga muestra una cuadrícula editable.</li>
+      <li><b>Margen % = (Precio Venta − Precio Compra) / Precio Venta × 100.</b></li>
+      <li><b>Coincidencia de productos:</b> se busca primero por SKU exacto y, si no hay, por similitud de nombre. Puedes ajustar la sensibilidad y vincular manualmente si algo no empata.</li>
+      <li><b>Recomendación IA:</b> es un motor de reglas que, por producto, elige el convenio con mayor margen disponible, respetando si el cliente puede o no entregar Orden de Compra (OC).</li>
+    </ul>
+  </details>
+
+  <div class="steps">
+    <button class="step-btn active" data-step="1"><span class="num">1</span><strong>Cargar Convenios</strong><div class="sub" id="stepSub1">0 convenios cargados</div></button>
+    <button class="step-btn" data-step="2"><span class="num">2</span><strong>Cargar Cotización</strong><div class="sub" id="stepSub2">Sin cotización cargada</div></button>
+    <button class="step-btn" data-step="3"><span class="num">3</span><strong>Comparativo y Recomendación</strong><div class="sub" id="stepSub3">Pendiente</div></button>
+  </div>
+
+  <!-- PASO 1: CONVENIOS -->
+  <section class="panel active" id="panel1">
+    <h2>Paso 1 · Convenios cargados</h2>
+    <p class="hint">Sube aquí todos los convenios vigentes (uno o varios archivos a la vez). Cada convenio se guarda en este navegador para usarse como base de comparación en cualquier cotización futura.</p>
+
+    <div class="dropzone" id="dropzoneConvenios">
+      <p style="margin:0 0 8px;font-weight:600;">📎 Arrastra aquí tus convenios o haz clic para seleccionarlos</p>
+      <p class="hint" style="margin:0;">PDF, Word, Excel, CSV o TXT — puedes seleccionar varios archivos a la vez</p>
+      <input type="file" id="inputConvenios" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" style="display:none;">
+    </div>
+
+    <div id="convenioFeedback"></div>
+
+    <h3 style="margin-top:26px;">Convenios guardados</h3>
+    <div id="listaConvenios"><p class="hint">Aún no hay convenios cargados.</p></div>
+  </section>
+
+  <!-- PASO 2: COTIZACION -->
+  <section class="panel" id="panel2">
+    <h2>Paso 2 · Cotización / solicitud de precios del cliente</h2>
+    <p class="hint">Sube el PDF (o Word/Excel/CSV) con los productos que el cliente está solicitando cotizar.</p>
+
+    <div class="dropzone" id="dropzoneCotizacion">
+      <p style="margin:0 0 8px;font-weight:600;">📎 Arrastra aquí la cotización o haz clic para seleccionarla</p>
+      <p class="hint" style="margin:0;">Se puede cargar un solo archivo; también puedes agregar productos manualmente después</p>
+      <input type="file" id="inputCotizacion" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" style="display:none;">
+    </div>
+
+    <div id="cotizacionFeedback"></div>
+
+    <div id="cotizacionReviewWrap" style="display:none;margin-top:20px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px;">
+        <h3 style="margin:0;">Productos solicitados (revisa y corrige antes de comparar)</h3>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;">
+          <input type="checkbox" id="chkClienteOC" checked style="width:auto;"> El cliente puede entregar Orden de Compra (OC)
+        </label>
+      </div>
+      <div id="cotizacionTableWrap"></div>
+      <div class="toolbar">
+        <button class="btn secondary small" id="btnAddCotRow">+ Agregar producto</button>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="btnGenerarComparativo">Generar comparativo →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASO 3: COMPARATIVO -->
+  <section class="panel" id="panel3">
+    <h2>Paso 3 · Comparativo y recomendación</h2>
+
+    <div class="row" style="justify-content:space-between;margin-bottom:14px;">
+      <div class="sensitivity">
+        Sensibilidad de coincidencia de nombre:
+        <input type="range" id="rangoSensibilidad" min="10" max="80" value="35">
+        <span id="lblSensibilidad">35%</span>
+        <button class="btn ghost small" id="btnRecalcular">Recalcular</button>
+      </div>
+      <div class="toolbar" style="margin:0;">
+        <button class="btn secondary small" id="btnExportCmp">⬇ Exportar comparativo (CSV)</button>
+        <button class="btn secondary small" id="btnExportCompra">⬇ Exportar orden de compra recomendada (CSV)</button>
+        <button class="btn ghost small" id="btnPrint">🖨 Imprimir</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpiWrap"></div>
+
+    <div class="cmp-scroll">
+      <table class="cmp-table" id="cmpTable">
+        <thead><tr id="cmpHead"></tr></thead>
+        <tbody id="cmpBody"></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:28px;">Resumen de compra recomendada (agrupado por convenio)</h3>
+    <div class="cmp-scroll">
+      <table id="resumenTable">
+        <thead><tr><th>Empresa / Convenio</th><th># Productos</th><th>Cantidad total</th><th>Costo total</th><th>Venta total</th><th>Utilidad estimada</th><th>Margen % ponderado</th></tr></thead>
+        <tbody id="resumenBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer>Comparador de Convenios · Los datos se guardan localmente en este navegador (no hay servidor ni nube involucrados).</footer>
+
+<!-- MODAL revisión de convenio -->
+<div class="modal-overlay" id="modalConvenio">
+  <div class="modal">
+    <button class="close-x" id="modalClose">×</button>
+    <h3 id="modalTitle">Revisar convenio</h3>
+    <div class="row">
+      <div class="field">
+        <label>Empresa / Marca</label>
+        <input type="text" id="modalEmpresa" placeholder="Ej. URREA">
+      </div>
+      <div class="field">
+        <label>No. de Convenio</label>
+        <input type="text" id="modalConvenioNo" placeholder="Ej. 0001">
+      </div>
+      <div class="field" style="min-width:220px;">
+        <label>&nbsp;</label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:600;"><input type="checkbox" id="modalRequiereOC" style="width:auto;"> Este convenio exige Orden de Compra (OC)</label>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:12px;">Revisa que SKU, Producto, Precio de Compra y Precio de Venta estén correctos. Corrige lo que la lectura automática no haya interpretado bien.</p>
+    <div id="modalTableWrap" style="max-height:360px;overflow:auto;"></div>
+    <div class="toolbar"><button class="btn secondary small" id="modalAddRow">+ Agregar fila</button></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="modalCancel">Cancelar</button>
+      <button class="btn" id="modalSave">Guardar convenio</button>
+    </div>
+  </div>
+</div>
+
+<!-- Librerías de terceros (CDN cdnjs) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.11.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script type="module">
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.1.200/pdf.worker.min.mjs";
+
+/* ============================= ESTADO ============================= */
+const state = {
+  convenios: [],       // [{id, fileName, empresa, convenioNo, requiereOC, fechaCarga, rows:[{sku,producto,compra,venta}]}]
+  cotizacion: [],       // [{sku,producto,cantidad}]
+  clienteConOC: true,
+  matches: null          // resultado del último cálculo
+};
+let pendingQueue = [];   // cola de archivos de convenio por revisar
+let editingConvenioId = null; // null = nuevo
+
+/* ============================= INDEXEDDB ============================= */
+const DB_NAME = "comparador_convenios_db";
+const DB_VERSION = 1;
+function openDB(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e)=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains("convenios")){
+        db.createObjectStore("convenios", { keyPath: "id" });
+      }
+    };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+async function dbPutConvenio(convenio){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction("convenios","readwrite");
+    tx.objectStore("convenios").put(convenio);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function dbDeleteConvenio(id){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction("convenios","readwrite");
+    tx.objectStore("convenios").delete(id);
+    tx.oncomplete = ()=>resolve();
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function dbGetAllConvenios(){
+  const db = await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction("convenios","readonly");
+    const req = tx.objectStore("convenios").getAll();
+    req.onsuccess = ()=> resolve(req.result || []);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+/* ============================= UTILIDADES ============================= */
+function uid(){ return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+
+function normalizeText(s){
+  return (s||'').toString()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+const STOPWORDS = new Set(['de','del','la','el','los','las','para','con','tipo','marca','modelo','color','y','en','un','una']);
+function tokenize(s){
+  return normalizeText(s).split(' ').filter(t=>t.length>=3 && !STOPWORDS.has(t));
+}
+function matchScore(a,b){
+  const na = normalizeText(a), nb = normalizeText(b);
+  if(!na || !nb) return 0;
+  if(na === nb) return 1;
+  if(na.includes(nb) || nb.includes(na)) return 0.9;
+  const ta = tokenize(a), tb = tokenize(b);
+  if(ta.length===0 || tb.length===0) return 0;
+  const common = ta.filter(t=>tb.includes(t)).length;
+  return (2*common) / (ta.length + tb.length);
+}
+function parseNumber(v){
+  if(v===undefined || v===null) return NaN;
+  if(typeof v === 'number') return v;
+  let s = v.toString().trim();
+  if(s==='') return NaN;
+  s = s.replace(/[^0-9.,\-]/g,'');
+  if(s.includes(',') && s.includes('.')){
+    s = s.replace(/,/g,'');
+  } else if(s.includes(',') && !s.includes('.')){
+    // asumir coma como separador de miles si no termina en ,dd
+    if(/,\d{1,2}$/.test(s)) s = s.replace(',','.');
+    else s = s.replace(/,/g,'');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? NaN : n;
+}
+function money(n){
+  if(n===null || n===undefined || isNaN(n)) return '—';
+  return new Intl.NumberFormat('es-MX', {style:'currency', currency:'MXN', maximumFractionDigits:2}).format(n);
+}
+function pct(n){
+  if(n===null || n===undefined || isNaN(n)) return '—';
+  return n.toFixed(1) + '%';
+}
+function margin(compra, venta){
+  if(isNaN(compra) || isNaN(venta) || venta===0) return NaN;
+  return ((venta-compra)/venta)*100;
+}
+function toast(msg, type){
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' '+type : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 3800);
+}
+function skuLike(tok){ return /^[a-z0-9][a-z0-9\-\.\/]{1,14}$/i.test(tok) && /[0-9]/.test(tok); }
+
+/* ============================= LECTURA DE ARCHIVOS -> GRID ============================= */
+async function fileToGrid(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(ext==='pdf') return await gridFromPDF(file);
+  if(ext==='docx') return await gridFromDOCX(file);
+  if(ext==='xlsx' || ext==='xls') return await gridFromXLSX(file);
+  if(ext==='csv' || ext==='txt') return await gridFromTextFile(file);
+  throw new Error('Formato no soportado: .' + ext);
+}
+
+async function gridFromPDF(file){
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjsLib.getDocument({data: buf}).promise;
+  const lines = []; // cada linea: {y, cells:[str,...]}
+  for(let p=1; p<=doc.numPages; p++){
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    const byLine = new Map(); // y-redondeada -> items
+    content.items.forEach(it=>{
+      if(!it.str || !it.str.trim()) return;
+      const y = Math.round(it.transform[5] / 3) * 3;
+      const x = it.transform[4];
+      if(!byLine.has(y)) byLine.set(y, []);
+      byLine.get(y).push({x, w: it.width || 0, str: it.str});
+    });
+    const ys = Array.from(byLine.keys()).sort((a,b)=>b-a);
+    ys.forEach(y=>{
+      const items = byLine.get(y).sort((a,b)=>a.x-b.x);
+      const cells = [];
+      let current = '';
+      let lastEnd = null;
+      items.forEach(it=>{
+        if(lastEnd!==null && (it.x - lastEnd) > 9){
+          if(current.trim()) cells.push(current.trim());
+          current = it.str;
+        } else {
+          current += (current ? ' ' : '') + it.str;
+        }
+        lastEnd = it.x + it.w;
+      });
+      if(current.trim()) cells.push(current.trim());
+      if(cells.length) lines.push(cells);
+    });
+  }
+  return lines;
+}
+
+async function gridFromDOCX(file){
+  const buf = await file.arrayBuffer();
+  const result = await window.mammoth.convertToHtml({arrayBuffer: buf});
+  const html = result.value;
+  const parser = new DOMParser();
+  const docHtml = parser.parseFromString(html, 'text/html');
+  const tables = docHtml.querySelectorAll('table');
+  if(tables.length){
+    const grid = [];
+    tables.forEach(table=>{
+      table.querySelectorAll('tr').forEach(tr=>{
+        const cells = Array.from(tr.querySelectorAll('td,th')).map(td=>td.textContent.trim());
+        if(cells.some(c=>c)) grid.push(cells);
+      });
+    });
+    if(grid.length) return grid;
+  }
+  // sin tablas: usar texto plano linea por linea
+  const raw = await window.mammoth.extractRawText({arrayBuffer: buf});
+  return raw.value.split('\n').map(l=>l.trim()).filter(l=>l).map(l=>splitLooseLine(l));
+}
+
+async function gridFromXLSX(file){
+  const buf = await file.arrayBuffer();
+  const wb = window.XLSX.read(buf, {type:'array'});
+  for(const sheetName of wb.SheetNames){
+    const sheet = wb.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+    const clean = rows.map(r=>r.map(c=>(c===undefined||c===null)?'':c.toString().trim())).filter(r=>r.some(c=>c!==''));
+    if(clean.length) return clean;
+  }
+  return [];
+}
+
+async function gridFromTextFile(file){
+  const text = await file.text();
+  const lines = text.split('\n').map(l=>l.replace(/\r$/,'')).filter(l=>l.trim());
+  return lines.map(l=>{
+    if(l.includes('\t')) return l.split('\t').map(c=>c.trim());
+    if(l.includes(';') && (l.match(/;/g)||[]).length>=2) return l.split(';').map(c=>c.trim());
+    if(l.includes(',') && (l.match(/,/g)||[]).length>=2) return l.split(',').map(c=>c.trim());
+    return splitLooseLine(l);
+  });
+}
+
+function splitLooseLine(l){
+  const parts = l.split(/\s{2,}/).map(p=>p.trim()).filter(Boolean);
+  return parts.length>1 ? parts : [l.trim()];
+}
+
+/* ============================= GRID -> FILAS (convenio / cotizacion) ============================= */
+const HEADER_KEYS = {
+  sku: ['sku','codigo','clave','cod.','no. parte','numero de parte'],
+  producto: ['producto','descripcion','articulo','concepto','item'],
+  compra: ['compra','costo'],
+  venta: ['venta','precio publico','precio unitario','precio'],
+  empresa: ['empresa','marca','proveedor','fabricante'],
+  convenio: ['convenio','contrato','acuerdo'],
+  oc: ['orden de compra',' oc ','oc'],
+  cantidad: ['cantidad','cant','piezas','pzas','qty','pza']
+};
+function detectHeaderRow(grid){
+  for(let i=0;i<Math.min(grid.length,15);i++){
+    const norm = grid[i].map(c=>' '+normalizeText(c)+' ');
+    let hits = 0;
+    Object.values(HEADER_KEYS).forEach(keys=>{
+      if(norm.some(c=>keys.some(k=>c.includes(' '+k+' ') || c.includes(k)))) hits++;
+    });
+    if(hits>=2) return i;
+  }
+  return -1;
+}
+function mapColumns(headerRow){
+  const map = {};
+  headerRow.forEach((h,idx)=>{
+    const norm = normalizeText(h);
+    for(const [field,keys] of Object.entries(HEADER_KEYS)){
+      if(map[field]!==undefined) continue;
+      if(keys.some(k=>norm.includes(k))){ map[field] = idx; break; } // una columna solo puede mapear a un campo
+    }
+  });
+  return map;
+}
+
+function gridToConvenioRows(grid){
+  if(!grid.length) return [];
+  const headerIdx = detectHeaderRow(grid);
+  let rows = [];
+  if(headerIdx>=0){
+    const map = mapColumns(grid[headerIdx]);
+    for(let i=headerIdx+1;i<grid.length;i++){
+      const r = grid[i];
+      const producto = map.producto!==undefined ? r[map.producto] : null;
+      const compra = map.compra!==undefined ? parseNumber(r[map.compra]) : NaN;
+      const venta = map.venta!==undefined ? parseNumber(r[map.venta]) : NaN;
+      const sku = map.sku!==undefined ? (r[map.sku]||'') : '';
+      if((producto && producto.trim()) || !isNaN(compra) || !isNaN(venta)){
+        rows.push({sku: sku||'', producto: producto||'', compra: isNaN(compra)?'':compra, venta: isNaN(venta)?'':venta});
+      }
+    }
+    if(rows.length) return rows;
+  }
+  // sin encabezado reconocido: heuristica por fila
+  grid.forEach(r=>{
+    const nums = [];
+    const texts = [];
+    r.forEach(cell=>{
+      const n = parseNumber(cell);
+      if(!isNaN(n) && /[0-9]/.test(cell) && cell.replace(/[^0-9]/g,'').length>=2) nums.push(n);
+      else if(cell && cell.trim()) texts.push(cell.trim());
+    });
+    if(texts.length===0) return;
+    let sku = '';
+    if(texts.length>1 && skuLike(texts[0])){ sku = texts.shift(); }
+    const producto = texts.join(' ').trim();
+    if(!producto) return;
+    let compra='', venta='';
+    if(nums.length>=2){
+      const sorted = [...nums].sort((a,b)=>a-b);
+      compra = sorted[0]; venta = sorted[sorted.length-1];
+    } else if(nums.length===1){
+      venta = nums[0];
+    }
+    if(producto) rows.push({sku, producto, compra, venta});
+  });
+  return rows;
+}
+
+function gridToCotizacionRows(grid){
+  if(!grid.length) return [];
+  const headerIdx = detectHeaderRow(grid);
+  let rows = [];
+  if(headerIdx>=0){
+    const map = mapColumns(grid[headerIdx]);
+    for(let i=headerIdx+1;i<grid.length;i++){
+      const r = grid[i];
+      const producto = map.producto!==undefined ? r[map.producto] : null;
+      const sku = map.sku!==undefined ? (r[map.sku]||'') : '';
+      const cantidad = map.cantidad!==undefined ? parseNumber(r[map.cantidad]) : NaN;
+      if(producto && producto.trim()){
+        rows.push({sku: sku||'', producto: producto.trim(), cantidad: isNaN(cantidad)?1:cantidad});
+      }
+    }
+    if(rows.length) return rows;
+  }
+  grid.forEach(r=>{
+    const nums = [];
+    const texts = [];
+    r.forEach(cell=>{
+      const n = parseNumber(cell);
+      if(!isNaN(n) && /[0-9]/.test(cell) && cell.replace(/[^0-9]/g,'').length<=6) nums.push(n);
+      else if(cell && cell.trim()) texts.push(cell.trim());
+    });
+    if(texts.length===0) return;
+    let sku = '';
+    if(texts.length>1 && skuLike(texts[0])){ sku = texts.shift(); }
+    const producto = texts.join(' ').trim();
+    if(!producto) return;
+    const cantidad = nums.length ? nums[0] : 1;
+    rows.push({sku, producto, cantidad});
+  });
+  return rows;
+}
+
+/* ============================= UI: NAVEGACION DE PASOS ============================= */
+document.querySelectorAll('.step-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> goToStep(btn.dataset.step));
+});
+function goToStep(n){
+  document.querySelectorAll('.step-btn').forEach(b=>b.classList.toggle('active', b.dataset.step===String(n)));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel'+n));
+}
+function refreshStepSubs(){
+  document.getElementById('stepSub1').textContent = state.convenios.length + ' convenio(s) cargado(s)';
+  document.getElementById('stepSub2').textContent = state.cotizacion.length ? state.cotizacion.length + ' producto(s) en revisión' : 'Sin cotización cargada';
+  document.getElementById('stepSub3').textContent = state.matches ? 'Comparativo generado' : 'Pendiente';
+  document.querySelector('.step-btn[data-step="1"]').classList.toggle('done', state.convenios.length>0);
+  document.querySelector('.step-btn[data-step="2"]').classList.toggle('done', state.cotizacion.length>0);
+  document.querySelector('.step-btn[data-step="3"]').classList.toggle('done', !!state.matches);
+}
+
+/* ============================= PASO 1: CARGA DE CONVENIOS ============================= */
+const dzConvenios = document.getElementById('dropzoneConvenios');
+const inputConvenios = document.getElementById('inputConvenios');
+dzConvenios.addEventListener('click', ()=> inputConvenios.click());
+inputConvenios.addEventListener('change', e=> handleConvenioFiles(Array.from(e.target.files)));
+['dragover','dragleave','drop'].forEach(evt=>{
+  dzConvenios.addEventListener(evt, e=>{
+    e.preventDefault();
+    dzConvenios.classList.toggle('drag', evt==='dragover');
+    if(evt==='drop') handleConvenioFiles(Array.from(e.dataTransfer.files));
+  });
+});
+
+function handleConvenioFiles(files){
+  if(!files.length) return;
+  pendingQueue.push(...files);
+  processNextInQueue();
+}
+async function processNextInQueue(){
+  if(!pendingQueue.length) return;
+  const file = pendingQueue.shift();
+  const fb = document.getElementById('convenioFeedback');
+  fb.innerHTML = '<p class="hint">Leyendo ' + escapeHtml(file.name) + '…</p>';
+  try{
+    const grid = await fileToGrid(file);
+    const rows = gridToConvenioRows(grid);
+    fb.innerHTML = '';
+    openConvenioModal({
+      id: uid(),
+      fileName: file.name,
+      empresa: '',
+      convenioNo: '',
+      requiereOC: false,
+      fechaCarga: new Date().toISOString(),
+      rows: rows.length ? rows : [{sku:'',producto:'',compra:'',venta:''}]
+    }, false);
+  } catch(err){
+    console.error(err);
+    fb.innerHTML = '';
+    toast('No se pudo leer "' + file.name + '": ' + err.message, 'err');
+    processNextInQueue();
+  }
+}
+
+/* Modal de revisión de convenio */
+const modal = document.getElementById('modalConvenio');
+let modalRows = [];
+function openConvenioModal(convenio, isEdit){
+  editingConvenioId = isEdit ? convenio.id : null;
+  document.getElementById('modalTitle').textContent = (isEdit ? 'Editar convenio: ' : 'Revisar convenio nuevo: ') + convenio.fileName;
+  document.getElementById('modalEmpresa').value = convenio.empresa || '';
+  document.getElementById('modalConvenioNo').value = convenio.convenioNo || '';
+  document.getElementById('modalRequiereOC').checked = !!convenio.requiereOC;
+  modalRows = JSON.parse(JSON.stringify(convenio.rows));
+  modal.dataset.tempId = convenio.id;
+  modal.dataset.fileName = convenio.fileName;
+  modal.dataset.fechaCarga = convenio.fechaCarga;
+  renderModalTable();
+  modal.classList.add('show');
+}
+function renderModalTable(){
+  const wrap = document.getElementById('modalTableWrap');
+  let html = '<table class="mini-table"><thead><tr><th style="width:16%">SKU</th><th>Producto</th><th style="width:15%">Precio Compra</th><th style="width:15%">Precio Venta</th><th style="width:6%"></th></tr></thead><tbody>';
+  modalRows.forEach((r,i)=>{
+    html += '<tr>'+
+      '<td><input type="text" data-i="'+i+'" data-f="sku" value="'+escapeAttr(r.sku)+'"></td>'+
+      '<td><input type="text" data-i="'+i+'" data-f="producto" value="'+escapeAttr(r.producto)+'"></td>'+
+      '<td><input type="number" step="0.01" data-i="'+i+'" data-f="compra" value="'+escapeAttr(r.compra)+'"></td>'+
+      '<td><input type="number" step="0.01" data-i="'+i+'" data-f="venta" value="'+escapeAttr(r.venta)+'"></td>'+
+      '<td><button class="btn danger small" data-del="'+i+'">×</button></td>'+
+    '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const i = +e.target.dataset.i, f = e.target.dataset.f;
+      modalRows[i][f] = f==='compra'||f==='venta' ? e.target.value : e.target.value;
+    });
+  });
+  wrap.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click', ()=>{ modalRows.splice(+b.dataset.del,1); renderModalTable(); });
+  });
+}
+document.getElementById('modalAddRow').addEventListener('click', ()=>{
+  modalRows.push({sku:'',producto:'',compra:'',venta:''});
+  renderModalTable();
+});
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalCancel').addEventListener('click', closeModal);
+function closeModal(){
+  modal.classList.remove('show');
+  if(!editingConvenioId){ processNextInQueue(); }
+}
+document.getElementById('modalSave').addEventListener('click', async ()=>{
+  const empresa = document.getElementById('modalEmpresa').value.trim();
+  const convenioNo = document.getElementById('modalConvenioNo').value.trim();
+  if(!empresa){ toast('Indica la empresa/marca del convenio', 'err'); return; }
+  const cleanRows = modalRows
+    .map(r=>({sku:(r.sku||'').toString().trim(), producto:(r.producto||'').toString().trim(), compra: parseNumber(r.compra), venta: parseNumber(r.venta)}))
+    .filter(r=>r.producto);
+  if(!cleanRows.length){ toast('Agrega al menos un producto con precio', 'err'); return; }
+  const convenio = {
+    id: modal.dataset.tempId,
+    fileName: modal.dataset.fileName,
+    empresa, convenioNo,
+    requiereOC: document.getElementById('modalRequiereOC').checked,
+    fechaCarga: modal.dataset.fechaCarga,
+    rows: cleanRows
+  };
+  await dbPutConvenio(convenio);
+  const idx = state.convenios.findIndex(c=>c.id===convenio.id);
+  if(idx>=0) state.convenios[idx] = convenio; else state.convenios.push(convenio);
+  renderConveniosList();
+  refreshStepSubs();
+  toast('✓ Convenio guardado: ' + empresa + (convenioNo?(' — '+convenioNo):'') + ' ('+cleanRows.length+' productos)', 'ok');
+  modal.classList.remove('show');
+  if(!editingConvenioId) processNextInQueue();
+});
+
+function renderConveniosList(){
+  const wrap = document.getElementById('listaConvenios');
+  if(!state.convenios.length){ wrap.innerHTML = '<p class="hint">Aún no hay convenios cargados.</p>'; return; }
+  wrap.innerHTML = '';
+  state.convenios.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'list-item';
+    div.innerHTML = '<div><strong>'+escapeHtml(c.empresa)+'</strong>'+(c.convenioNo?' — Convenio '+escapeHtml(c.convenioNo):'')+
+      (c.requiereOC?' <span class="badge warn">Requiere OC</span>':'')+
+      '<div class="meta">'+escapeHtml(c.fileName)+' · '+c.rows.length+' productos · cargado '+new Date(c.fechaCarga).toLocaleDateString('es-MX')+'</div></div>'+
+      '<div class="row" style="gap:8px;"><button class="btn ghost small" data-edit="'+c.id+'">Editar</button><button class="btn danger small" data-del="'+c.id+'">Eliminar</button></div>';
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('[data-edit]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const c = state.convenios.find(x=>x.id===b.dataset.edit);
+      openConvenioModal(c, true);
+    });
+  });
+  wrap.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este convenio guardado?')) return;
+      await dbDeleteConvenio(b.dataset.del);
+      state.convenios = state.convenios.filter(c=>c.id!==b.dataset.del);
+      renderConveniosList();
+      refreshStepSubs();
+    });
+  });
+}
+
+/* ============================= PASO 2: CARGA DE COTIZACION ============================= */
+const dzCot = document.getElementById('dropzoneCotizacion');
+const inputCot = document.getElementById('inputCotizacion');
+dzCot.addEventListener('click', ()=> inputCot.click());
+inputCot.addEventListener('change', e=>{ if(e.target.files[0]) handleCotizacionFile(e.target.files[0]); });
+['dragover','dragleave','drop'].forEach(evt=>{
+  dzCot.addEventListener(evt, e=>{
+    e.preventDefault();
+    dzCot.classList.toggle('drag', evt==='dragover');
+    if(evt==='drop' && e.dataTransfer.files[0]) handleCotizacionFile(e.dataTransfer.files[0]);
+  });
+});
+async function handleCotizacionFile(file){
+  const fb = document.getElementById('cotizacionFeedback');
+  fb.innerHTML = '<p class="hint">Leyendo ' + escapeHtml(file.name) + '…</p>';
+  try{
+    const grid = await fileToGrid(file);
+    const rows = gridToCotizacionRows(grid);
+    state.cotizacion = rows.length ? rows : [{sku:'',producto:'',cantidad:1}];
+    fb.innerHTML = '<p class="badge ok">✓ Cotización cargada: '+escapeHtml(file.name)+' — '+state.cotizacion.length+' producto(s) detectado(s)</p>';
+    document.getElementById('cotizacionReviewWrap').style.display = 'block';
+    renderCotizacionTable();
+    refreshStepSubs();
+  } catch(err){
+    console.error(err);
+    fb.innerHTML = '';
+    toast('No se pudo leer "' + file.name + '": ' + err.message, 'err');
+  }
+}
+function renderCotizacionTable(){
+  const wrap = document.getElementById('cotizacionTableWrap');
+  let html = '<table class="mini-table"><thead><tr><th style="width:16%">SKU</th><th>Producto solicitado</th><th style="width:14%">Cantidad</th><th style="width:6%"></th></tr></thead><tbody>';
+  state.cotizacion.forEach((r,i)=>{
+    html += '<tr>'+
+      '<td><input type="text" data-i="'+i+'" data-f="sku" value="'+escapeAttr(r.sku)+'"></td>'+
+      '<td><input type="text" data-i="'+i+'" data-f="producto" value="'+escapeAttr(r.producto)+'"></td>'+
+      '<td><input type="number" step="1" data-i="'+i+'" data-f="cantidad" value="'+escapeAttr(r.cantidad)+'"></td>'+
+      '<td><button class="btn danger small" data-del="'+i+'">×</button></td>'+
+    '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const i = +e.target.dataset.i, f = e.target.dataset.f;
+      state.cotizacion[i][f] = e.target.value;
+    });
+  });
+  wrap.querySelectorAll('[data-del]').forEach(b=>{
+    b.addEventListener('click', ()=>{ state.cotizacion.splice(+b.dataset.del,1); renderCotizacionTable(); refreshStepSubs(); });
+  });
+}
+document.getElementById('btnAddCotRow').addEventListener('click', ()=>{
+  state.cotizacion.push({sku:'',producto:'',cantidad:1});
+  renderCotizacionTable();
+  document.getElementById('cotizacionReviewWrap').style.display = 'block';
+  refreshStepSubs();
+});
+document.getElementById('chkClienteOC').addEventListener('change', e=>{ state.clienteConOC = e.target.checked; });
+
+document.getElementById('btnGenerarComparativo').addEventListener('click', ()=>{
+  const cleaned = state.cotizacion.map(r=>({sku:(r.sku||'').trim(), producto:(r.producto||'').trim(), cantidad: parseNumber(r.cantidad)||1})).filter(r=>r.producto);
+  if(!cleaned.length){ toast('Agrega al menos un producto solicitado', 'err'); return; }
+  if(!state.convenios.length){ toast('Primero carga al menos un convenio en el Paso 1', 'err'); return; }
+  state.cotizacion = cleaned;
+  runComparativo();
+  goToStep(3);
+});
+
+/* ============================= PASO 3: COMPARATIVO ============================= */
+const rango = document.getElementById('rangoSensibilidad');
+rango.addEventListener('input', ()=>{ document.getElementById('lblSensibilidad').textContent = rango.value + '%'; });
+document.getElementById('btnRecalcular').addEventListener('click', ()=>{ if(state.cotizacion.length) runComparativo(); });
+
+function runComparativo(){
+  const threshold = (+rango.value) / 100;
+  const results = state.cotizacion.map(reqRow=>{
+    const opciones = [];
+    state.convenios.forEach(conv=>{
+      let best = null;
+      conv.rows.forEach(row=>{
+        let score = 0;
+        if(reqRow.sku && row.sku && normalizeText(reqRow.sku)===normalizeText(row.sku)) score = 1;
+        else score = matchScore(reqRow.producto, row.producto);
+        if(score >= threshold && (!best || score > best.score)){
+          best = {row, score};
+        }
+      });
+      if(best){
+        const m = margin(best.row.compra, best.row.venta);
+        opciones.push({
+          empresa: conv.empresa, convenioNo: conv.convenioNo, requiereOC: conv.requiereOC,
+          sku: best.row.sku, producto: best.row.producto,
+          compra: best.row.compra, venta: best.row.venta, margen: m, score: best.score
+        });
+      }
+    });
+    opciones.sort((a,b)=> (isNaN(b.margen)?-1:b.margen) - (isNaN(a.margen)?-1:a.margen));
+    const elegibles = opciones.filter(o=> state.clienteConOC || !o.requiereOC);
+    const recomendado = elegibles.length ? elegibles[0] : null;
+    return { req: reqRow, opciones, recomendado, sinOpcionPorOC: opciones.length>0 && elegibles.length===0 };
+  });
+  state.matches = results;
+  renderComparativo();
+  refreshStepSubs();
+}
+
+function opcionBox(o, esRecomendado, bloqueado){
+  if(!o) return '<div class="empty-cell">—</div>';
+  const cls = bloqueado ? 'blocked' : (esRecomendado ? 'best' : 'normal');
+  return '<div class="opt-box '+cls+'">'+
+    '<div class="empresa">'+escapeHtml(o.empresa)+(o.convenioNo?' · '+escapeHtml(o.convenioNo):'')+(o.requiereOC?' <span class="badge warn" style="margin-left:2px;">OC</span>':'')+'</div>'+
+    '<div class="linea"><span>Venta</span><b>'+money(o.venta)+'</b></div>'+
+    '<div class="linea"><span>Costo</span><b>'+money(o.compra)+'</b></div>'+
+    '<div class="linea"><span>Margen</span><b>'+pct(o.margen)+'</b></div>'+
+    (bloqueado ? '<div style="font-size:11px;color:var(--rojo);margin-top:3px;">No disponible sin OC</div>' : '')+
+  '</div>';
+}
+
+function renderComparativo(){
+  const maxOpciones = Math.max(1, ...state.matches.map(r=>r.opciones.length));
+  const head = document.getElementById('cmpHead');
+  let h = '<th>Producto solicitado</th>';
+  for(let i=1;i<=maxOpciones;i++) h += '<th>Opción '+i+' (mejor a peor)</th>';
+  h += '<th>Recomendación IA</th>';
+  head.innerHTML = h;
+
+  const body = document.getElementById('cmpBody');
+  body.innerHTML = '';
+  state.matches.forEach(r=>{
+    const tr = document.createElement('tr');
+    let cells = '<td><b>'+escapeHtml(r.req.producto)+'</b>'+(r.req.sku?'<br><span class="hint">SKU: '+escapeHtml(r.req.sku)+'</span>':'')+'<br><span class="hint">Cant.: '+r.req.cantidad+'</span></td>';
+    for(let i=0;i<maxOpciones;i++){
+      const o = r.opciones[i];
+      const bloqueado = o && !state.clienteConOC && o.requiereOC;
+      const esRec = r.recomendado && o === r.recomendado;
+      cells += '<td class="opt-cell">'+opcionBox(o, esRec, bloqueado)+'</td>';
+    }
+    let recHtml;
+    if(r.recomendado){
+      recHtml = opcionBox(r.recomendado, true, false);
+    } else if(r.sinOpcionPorOC){
+      recHtml = '<div class="opt-box blocked"><div class="empresa">Sin opción viable</div><div style="font-size:12px;">Todas las opciones requieren OC y el cliente no puede emitirla</div></div>';
+    } else if(r.opciones.length===0){
+      recHtml = '<div class="empty-cell">Sin coincidencia en convenios cargados</div>';
+    } else {
+      recHtml = '<div class="empty-cell">—</div>';
+    }
+    cells += '<td class="rec-cell">'+recHtml+'</td>';
+    tr.innerHTML = cells;
+    body.appendChild(tr);
+  });
+
+  renderKPIs();
+  renderResumenCompra();
+}
+
+function renderKPIs(){
+  const wrap = document.getElementById('kpiWrap');
+  const total = state.matches.length;
+  const conRec = state.matches.filter(r=>r.recomendado).length;
+  const sinMatch = state.matches.filter(r=>r.opciones.length===0).length;
+  let utilidadTotal = 0, ventaTotal = 0;
+  state.matches.forEach(r=>{
+    if(r.recomendado){
+      utilidadTotal += (r.recomendado.venta - r.recomendado.compra) * (r.req.cantidad||1);
+      ventaTotal += r.recomendado.venta * (r.req.cantidad||1);
+    }
+  });
+  const margenProm = ventaTotal>0 ? (utilidadTotal/ventaTotal*100) : NaN;
+  wrap.innerHTML = [
+    kpi(total, 'Productos solicitados'),
+    kpi(conRec, 'Con recomendación'),
+    kpi(sinMatch, 'Sin coincidencia en convenios'),
+    kpi(money(utilidadTotal), 'Utilidad estimada total'),
+    kpi(pct(margenProm), 'Margen % ponderado')
+  ].join('');
+}
+function kpi(val,lbl){ return '<div class="kpi"><div class="val">'+val+'</div><div class="lbl">'+lbl+'</div></div>'; }
+
+function renderResumenCompra(){
+  const grupos = {};
+  state.matches.forEach(r=>{
+    if(!r.recomendado) return;
+    const key = r.recomendado.empresa + '|' + r.recomendado.convenioNo;
+    if(!grupos[key]) grupos[key] = {empresa:r.recomendado.empresa, convenioNo:r.recomendado.convenioNo, n:0, cant:0, costo:0, venta:0};
+    const g = grupos[key];
+    const cant = r.req.cantidad||1;
+    g.n++; g.cant += cant;
+    g.costo += r.recomendado.compra * cant;
+    g.venta += r.recomendado.venta * cant;
+  });
+  const body = document.getElementById('resumenBody');
+  const list = Object.values(grupos).sort((a,b)=> (b.venta-b.costo) - (a.venta-a.costo));
+  if(!list.length){ body.innerHTML = '<tr><td colspan="7" class="empty-cell">Aún no hay recomendaciones calculadas</td></tr>'; return; }
+  let totCosto=0, totVenta=0, totCant=0;
+  body.innerHTML = list.map(g=>{
+    const utilidad = g.venta-g.costo;
+    const m = g.venta>0 ? utilidad/g.venta*100 : NaN;
+    totCosto+=g.costo; totVenta+=g.venta; totCant+=g.cant;
+    return '<tr><td><b>'+escapeHtml(g.empresa)+'</b>'+(g.convenioNo?' — '+escapeHtml(g.convenioNo):'')+'</td><td>'+g.n+'</td><td>'+g.cant+'</td><td>'+money(g.costo)+'</td><td>'+money(g.venta)+'</td><td>'+money(utilidad)+'</td><td>'+pct(m)+'</td></tr>';
+  }).join('') + '<tr style="font-weight:700;background:var(--gris-100);"><td>TOTAL</td><td>'+list.reduce((s,g)=>s+g.n,0)+'</td><td>'+totCant+'</td><td>'+money(totCosto)+'</td><td>'+money(totVenta)+'</td><td>'+money(totVenta-totCosto)+'</td><td>'+pct(totVenta>0?(totVenta-totCosto)/totVenta*100:NaN)+'</td></tr>';
+}
+
+/* ============================= EXPORTAR CSV / IMPRIMIR ============================= */
+function downloadCSV(filename, rows){
+  const csv = rows.map(r=>r.map(c=>{
+    const s = (c===null||c===undefined) ? '' : c.toString();
+    return /[",\n;]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob(["﻿"+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+document.getElementById('btnExportCmp').addEventListener('click', ()=>{
+  if(!state.matches){ toast('Primero genera el comparativo', 'err'); return; }
+  const rows = [['Producto','SKU','Cantidad','Empresa','Convenio','Requiere OC','Precio Compra','Precio Venta','Margen %','Recomendado']];
+  state.matches.forEach(r=>{
+    if(!r.opciones.length){ rows.push([r.req.producto, r.req.sku, r.req.cantidad, '', '', '', '', '', '', 'SIN COINCIDENCIA']); return; }
+    r.opciones.forEach(o=>{
+      rows.push([r.req.producto, r.req.sku, r.req.cantidad, o.empresa, o.convenioNo, o.requiereOC?'Sí':'No', o.compra, o.venta, isNaN(o.margen)?'':o.margen.toFixed(1), (r.recomendado===o)?'SI':'']);
+    });
+  });
+  downloadCSV('comparativo_convenios.csv', rows);
+});
+document.getElementById('btnExportCompra').addEventListener('click', ()=>{
+  if(!state.matches){ toast('Primero genera el comparativo', 'err'); return; }
+  const rows = [['Empresa','Convenio','Producto','SKU','Cantidad','Precio Compra','Precio Venta','Margen %','Subtotal Costo','Subtotal Venta','Utilidad']];
+  state.matches.forEach(r=>{
+    if(!r.recomendado) return;
+    const o = r.recomendado, cant = r.req.cantidad||1;
+    rows.push([o.empresa, o.convenioNo, r.req.producto, r.req.sku, cant, o.compra, o.venta, isNaN(o.margen)?'':o.margen.toFixed(1), (o.compra*cant).toFixed(2), (o.venta*cant).toFixed(2), ((o.venta-o.compra)*cant).toFixed(2)]);
+  });
+  downloadCSV('orden_compra_recomendada.csv', rows);
+});
+document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+
+/* ============================= HELPERS HTML ============================= */
+function escapeHtml(s){
+  return (s===undefined||s===null?'':s.toString()).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+/* ============================= INICIALIZACION ============================= */
+(async function init(){
+  try{
+    state.convenios = await dbGetAllConvenios();
+  } catch(e){ console.error('No se pudo abrir IndexedDB', e); }
+  renderConveniosList();
+  refreshStepSubs();
+})();
+</script>
+</body>
+</html>
